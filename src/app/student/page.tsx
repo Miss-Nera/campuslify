@@ -209,7 +209,7 @@ export default function StudentProfilePage() {
                   </Label>
                   <Input
                     name="address"
-                    value={profile.address}
+                    value={profile?.address || ''}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className="focus:ring-indigo-500"

@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
-import { loadAdmins, loadStudent, seedAdminAccounts } from "@/utils/auth";
+import { loadAdmins, loadStudent, saveAdminProfile, seedAdminAccounts } from "@/utils/auth";
+import { saveStudentProfile } from "@/utils/localstorage";
 
 export default function LoginPage() {
   const [role, setRole] = useState<"student" | "admin">("student");
@@ -15,7 +16,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    seedAdminAccounts();
+    seedAdminAccounts(); // Seeds a default admin if needed
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,6 +26,7 @@ export default function LoginPage() {
 
   const handleRoleToggle = () => {
     setRole((prev) => (prev === "student" ? "admin" : "student"));
+    setForm({ id: "", name: "", password: "" });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -40,12 +42,12 @@ export default function LoginPage() {
       const student = loadStudent();
       const match =
         student &&
-        student.matricNumber === id.trim() &&
-        student.fullName.toLowerCase() === name.trim().toLowerCase() &&
+        student.matricNumber?.trim().toLowerCase() === id.trim().toLowerCase() &&
+        student.fullName?.trim().toLowerCase() === name.trim().toLowerCase() &&
         student.password === password;
 
       if (match) {
-        localStorage.setItem("studentProfile", JSON.stringify(student)); // ✅ Save current login
+        saveStudentProfile(student); // ✅ consistent key
         toast.success("Welcome back, student!");
         router.push("/student");
       } else {
@@ -55,12 +57,13 @@ export default function LoginPage() {
       const admins = loadAdmins();
       const match = admins.find(
         (admin) =>
-          admin.id === id.trim() &&
-          admin.fullName.toLowerCase() === name.trim().toLowerCase() &&
+          admin.id?.trim().toLowerCase() === id.trim().toLowerCase() &&
+          admin.fullName?.trim().toLowerCase() === name.trim().toLowerCase() &&
           admin.password === password
       );
 
       if (match) {
+        saveAdminProfile(match); // ✅ saves under currentAdminProfile
         toast.success("Welcome, Admin!");
         router.push("/admin");
       } else {
@@ -72,7 +75,10 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-100 to-white dark:from-zinc-900 dark:to-zinc-950 px-4">
       <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-indigo-100 dark:border-zinc-700 rounded-lg shadow-xl p-6 space-y-6">
-        <h1 className="text-2xl font-bold text-center text-indigo-700 dark:text-indigo-400">Login</h1>
+        <h1 className="text-2xl font-bold text-center text-indigo-700 dark:text-indigo-400">
+          {role === "student" ? "Student" : "Admin"} Login
+        </h1>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm text-gray-600 dark:text-gray-300 mb-1">

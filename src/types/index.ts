@@ -12,14 +12,22 @@ export interface StudentProfile {
   dob: string;
   password: string;
   image?: string;
-  gender: string;
+  gender: "male" |"female";
   createdAt?: Date; 
 }
-export type Admin = {
+export interface Admin {
+  id: string;              // ✅ Used for login and internal ID
   fullName: string;
-  adminID: string;
-  email: string;
   password: string;
-  image?:string
-};
+  email: string;
+  phone: string;
+  address: string;
+  gender: "male" | "female";
+  dob: string;             // "YYYY-MM-DD"
+  department: string;
+  post: string;
+  image?: string;
+}
+
+
 

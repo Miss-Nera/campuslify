@@ -1,29 +1,38 @@
-// utils/localstorage.ts
 import { StudentProfile } from "@/types";
 import { Admin } from "@/types";
 
 type AdminProfile = Admin & { image?: string };
 
-const STORAGE_KEY = "student-profile";
+// Student key – declared only once
+const STUDENT_KEY = "studentProfile";
+const ADMIN_KEY = "adminProfile";
 
-export function saveProfile(profile: StudentProfile) {
+// ✅ Student
+export function saveStudentProfile(profile: StudentProfile) {
   if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+    localStorage.setItem(STUDENT_KEY, JSON.stringify(profile));
   }
 }
 
-export function loadProfile(): StudentProfile | null {
+export function loadStudentProfile(): StudentProfile | null {
   if (typeof window !== "undefined") {
-    const data = localStorage.getItem(STORAGE_KEY);
+    const data = localStorage.getItem(STUDENT_KEY);
     return data ? JSON.parse(data) : null;
   }
   return null;
 }
-export const saveAdminProfile = (admin: AdminProfile) => {
-  localStorage.setItem("adminProfile", JSON.stringify(admin));
-};
 
-export const loadAdminProfile = (): AdminProfile | null => {
-  const stored = localStorage.getItem("adminProfile");
-  return stored ? JSON.parse(stored) as AdminProfile : null;
-};
+// ✅ Admin
+export function saveAdminProfile(profile: AdminProfile) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(ADMIN_KEY, JSON.stringify(profile));
+  }
+}
+
+export function loadAdminProfile(): AdminProfile | null {
+  if (typeof window !== "undefined") {
+    const data = localStorage.getItem(ADMIN_KEY);
+    return data ? JSON.parse(data) : null;
+  }
+  return null;
+}

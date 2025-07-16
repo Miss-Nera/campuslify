@@ -16,7 +16,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { saveProfile } from "@/utils/localstorage";
+import {
+  loadStudentProfile,
+  saveStudentProfile,
+} from "@/utils/localstorage";
 
 const defaultProfile: StudentProfile = {
   fullName: "",
@@ -41,13 +44,12 @@ export default function StudentProfilePage() {
   const [image, setImage] = useState<string>("");
 
   useEffect(() => {
-    const stored = localStorage.getItem("studentProfile");
+    const stored = loadStudentProfile(); // ✅ correct key and function
     const storedImg = localStorage.getItem("profileImage");
 
     if (stored) {
-      const parsed = JSON.parse(stored);
-      setProfile(parsed);
-      setImage(parsed.image || storedImg || "");
+      setProfile(stored);
+      setImage(stored.image || storedImg || "");
     } else if (storedImg) {
       setImage(storedImg);
     }
@@ -79,7 +81,8 @@ export default function StudentProfilePage() {
       toast.error("Please fill all required fields.");
       return;
     }
-    saveProfile(profile);
+
+    saveStudentProfile(profile); // ✅ correct save function
     toast.success("Profile saved successfully.");
     setIsEditing(false);
   };
@@ -134,13 +137,9 @@ export default function StudentProfilePage() {
                     <Label className="flex gap-1 items-center text-sm text-indigo-700 dark:text-indigo-300">
                       {field.icon} {field.label}
                     </Label>
-                   <Input
+                    <Input
                       name={field.name}
-                      value={
-                        profile[field.name as keyof StudentProfile] instanceof Date
-                          ? (profile[field.name as keyof StudentProfile] as Date).toISOString().slice(0, 10)
-                          : String(profile[field.name as keyof StudentProfile] ?? "")
-                      }
+                      value={String(profile[field.name as keyof StudentProfile] ?? "")}
                       onChange={handleChange}
                       disabled={!isEditing}
                       required={field.required}
@@ -209,7 +208,7 @@ export default function StudentProfilePage() {
                   </Label>
                   <Input
                     name="address"
-                    value={profile?.address || ''}
+                    value={profile?.address || ""}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className="focus:ring-indigo-500"

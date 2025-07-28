@@ -1,27 +1,21 @@
-import { SidebarContent, SidebarProvider } from '@/components/ui/sidebar'
-import React from 'react'
-import { AppSidebar } from '../components/app-sidebar'
-import AppNavBar from '../components/app-navbar'
-type Props = {
-  children: React.ReactNode
-}
-const AdminLayout = ({ children }: Props) => {
-    return (
-        <SidebarProvider>
-         <AppSidebar /> 
-         <SidebarContent>
+"use client";
 
-        <main className='mx-4 mt-1 rounded-md'>
-          <div className="flex flex-col"> 
-           <AppNavBar />
-          </div>
-        </main>
-        <div className="m-4">
-         {children}
-        </div>
-         </SidebarContent> 
-       </SidebarProvider>
-    )
-}
+import AdminNavBar from "./AdminNavBar";
+import AdminSidebar from "./AdminSideBar";
 
-export default AdminLayout
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen">
+      {/* Sidebar */}
+      <AdminSidebar />
+
+      <div className="flex-1 flex flex-col">
+        {/* Navbar */}
+        <AdminNavBar />
+
+        {/* Page Content */}
+        <main className="flex-1 p-6">{children}</main>
+      </div>
+    </div>
+  );
+}

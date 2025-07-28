@@ -21,22 +21,27 @@ import {
   saveStudentProfile,
 } from "@/utils/localstorage";
 
+
 const defaultProfile: StudentProfile = {
-  fullName: "",
-  matricNumber: "",
-  department: "",
-  level: "",
-  email: "",
-  phone: "",
-  address: "",
+  id: "abc123",
+  fullName: "John Doe",
+  matricNumber: "M123456",
+  department: "Computer Science",
+  level: "300",
+  email: "johndoe@example.com",
+  phone: "08012345678",
+  address: "Campus Road",
   gender: "male",
-  dob: "",
-  hostel: "",
-  college: "",
-  id: "",
-  password: "",
-  image: "",
+  dob: "2000-01-01",
+  hostel: "Block A",
+  college: "Engineering",
+  password: "password123",
+  image: "/default.jpg",
+
+  // ✅ This is the important line:
+  payments: [],
 };
+
 
 export default function StudentProfilePage() {
   const [profile, setProfile] = useState<StudentProfile>(defaultProfile);

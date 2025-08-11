@@ -1,9 +1,7 @@
 "use client";
 
-// import AppNavBar from "@/components/student/StudentNavBar";
-// import StudentSidebar from "@/components/student/StudentSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import AppNavBar from "./StudentNavBar";
+import StudentNavBar from "./StudentNavBar";
 import { AppSidebar } from "./StudentSideBar";
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
@@ -13,11 +11,9 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
         {/* Sidebar */}
         <AppSidebar />
 
-        <div className="flex-1 flex flex-col">
-          {/* Navbar (sticks to top) */}
-          <div className="sticky top-0 z-10">
-            <AppNavBar />
-          </div>
+         <div className="flex-1 flex flex-col">
+               {/* Navbar */}
+               <StudentNavBar />
 
           {/* Page content fills the rest */}
           <main className="flex-1 p-6">{children} </main>

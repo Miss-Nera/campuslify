@@ -23,7 +23,7 @@ export default function StudentAnnouncementsPage() {
   }, []);
 
   return (
-    <main className="max-w-5xl mx-auto p-6 mt-10 space-y-6">
+    <div className="w-full space-y-6">
       <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
         📢 Announcements
       </h1>
@@ -33,9 +33,12 @@ export default function StudentAnnouncementsPage() {
           No announcements at the moment.
         </p>
       ) : (
-        <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {announcements.map((ann) => (
-            <Card key={ann.id} className="shadow-sm hover:shadow-md transition">
+            <Card
+              key={ann.id}
+              className="shadow-sm hover:shadow-md transition"
+            >
               <CardHeader className="flex justify-between items-start">
                 <div>
                   <h2 className="text-lg font-semibold">{ann.title}</h2>
@@ -54,6 +57,6 @@ export default function StudentAnnouncementsPage() {
           ))}
         </div>
       )}
-    </main>
+    </div>
   );
 }

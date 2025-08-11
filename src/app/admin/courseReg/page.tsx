@@ -27,7 +27,7 @@ export default function AdminCourseRegistrationPage() {
 
   useEffect(() => {
     const allProfiles: StudentProfile[] = JSON.parse(
-      localStorage.getItem("studentProfiles") || "[]"
+      localStorage.getItem("studentProfile") || "[]"
     );
 
     // collect all courses with registered students

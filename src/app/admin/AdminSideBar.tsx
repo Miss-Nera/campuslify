@@ -10,11 +10,11 @@ export default function AdminSidebar() {
         <Link href="/admin/dashboard" className="block hover:underline">
           Dashboard
         </Link>
-        <Link href="/admin/students" className="block hover:underline">
+        <Link href="/admin/ManageStudents" className="block hover:underline">
           Manage Students
         </Link>
         <Link href="/admin/accommodation" className="block hover:underline">
-          Accommodation Requests
+          Accommodation 
         </Link>
         <Link href="/admin/announcement" className="block hover:underline">
           Announcement

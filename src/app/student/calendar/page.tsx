@@ -16,7 +16,6 @@ export default function AcademicCalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   useEffect(() => {
-    // Load events from the same key Admin uses
     const storedEvents: CalendarEvent[] = JSON.parse(
       localStorage.getItem("calendarEvents") || "[]"
     );
@@ -24,15 +23,17 @@ export default function AcademicCalendarPage() {
   }, []);
 
   const today = new Date();
-  const upcomingEvents = events.filter(
-    (event) => new Date(event.date) >= today
-  );
-  const pastEvents = events.filter(
-    (event) => new Date(event.date) < today
-  );
+
+  const upcomingEvents = events
+    .filter((event) => new Date(event.date) >= today)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  const pastEvents = events
+    .filter((event) => new Date(event.date) < today)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
-    <main className="max-w-5xl mx-auto p-6 mt-10 space-y-10">
+    <main className="w-full p-6 space-y-10">
       {/* Header */}
       <Card className="shadow-lg bg-gradient-to-r from-indigo-500 to-indigo-700 text-white">
         <CardContent className="py-6">
@@ -52,24 +53,39 @@ export default function AcademicCalendarPage() {
         {upcomingEvents.length > 0 ? (
           <ScrollArea className="h-[250px] pr-4">
             <div className="space-y-4">
-              {upcomingEvents.map((event) => (
-                <Card key={event.id} className="shadow-sm">
-                  <CardHeader className="font-semibold text-indigo-700">
-                    {event.title}
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-600">
-                      <strong>Date:</strong>{" "}
-                      {new Date(event.date).toLocaleDateString()}
-                    </p>
-                    <p className="text-sm mt-2">{event.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
+              {upcomingEvents.map((event) => {
+                const isToday =
+                  new Date(event.date).toDateString() === today.toDateString();
+                return (
+                  <Card key={event.id} className="shadow-sm">
+                    <CardHeader
+                      className={`font-semibold ${
+                        isToday ? "text-green-600" : "text-indigo-700"
+                      }`}
+                    >
+                      {event.title}
+                    </CardHeader>
+                    <CardContent>
+                      <p
+                        className={`text-sm ${
+                          isToday ? "text-green-600 font-bold" : "text-gray-600"
+                        }`}
+                      >
+                        <strong>Date:</strong>{" "}
+                        {new Date(event.date).toLocaleDateString()}
+                        {isToday && " (Today)"}
+                      </p>
+                      <p className="text-sm mt-2">{event.description}</p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </ScrollArea>
         ) : (
-          <p className="text-gray-500 text-sm">No upcoming events.</p>
+          <p className="text-gray-500 text-sm text-center">
+            🎉 No upcoming events. Stay tuned!
+          </p>
         )}
       </section>
 
@@ -99,7 +115,9 @@ export default function AcademicCalendarPage() {
             </div>
           </ScrollArea>
         ) : (
-          <p className="text-gray-500 text-sm">No past events recorded.</p>
+          <p className="text-gray-500 text-sm text-center">
+            📌 No past events recorded.
+          </p>
         )}
       </section>
     </main>

@@ -54,6 +54,8 @@ export interface StudentProfile {
   results?: SemesterResult[];
   cgpa?: number;
   payments: Payment[];
+   emergencyContact: string;
+  roomId?: string;
 }
 
 export interface Admin {
@@ -69,3 +71,14 @@ export interface Admin {
   post: string;
   image?: string;
 }
+export interface HostelRoom {
+  students: string;
+  id: string;
+  name: string;         // e.g., "Room A1"
+  capacity: number;     // e.g., 4
+  occupants: string[];  // student IDs (to fetch from studentProfiles)
+  roomNumber: string;
+  status: "available" | "occupied" | "maintenance"; // ✅ Added
+}
+
+

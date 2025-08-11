@@ -1,175 +1,124 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Users } from "lucide-react";
-import { StudentProfile, Hostel } from "@/types";
+import { Hostel } from "@/types";
 
-type Application = {
-  studentId: string;
-  studentName: string;
-  hostelId: string;
-  hostelName: string;
-  status: "Pending Approval" | "Approved" | "Declined";
-  date: string;
+type StudentProfile = {
+  id: string;
+  fullName: string;
+  matricNumber: string;
+  gender: string;
+  hostel?: string;
 };
 
-export default function StudentAccommodationPage() {
-  const [profile, setProfile] = useState<StudentProfile | null>(null);
-  const [applications, setApplications] = useState<Application[]>([]);
+// ✅ Safe JSON parser
+function safeParse<T>(key: string, fallback: T): T {
+  try {
+    const stored = localStorage.getItem(key);
+    if (!stored) return fallback;
+    const parsed = JSON.parse(stored);
+
+    // Ensure type consistency
+    if (Array.isArray(fallback) && !Array.isArray(parsed)) return fallback;
+    return parsed as T;
+  } catch {
+    return fallback;
+  }
+}
+
+export default function StudentHostelBooking() {
   const [hostels, setHostels] = useState<Hostel[]>([]);
+  const [student, setStudent] = useState<StudentProfile | null>(null);
+  const [allStudents, setAllStudents] = useState<StudentProfile[]>([]);
 
   useEffect(() => {
-    const data = localStorage.getItem("studentProfile");
-    if (data) {
-      const parsed: StudentProfile = JSON.parse(data);
-      setProfile(parsed);
-
-      const allApps: Application[] = JSON.parse(
-        localStorage.getItem("accommodationApplications") || "[]"
-      );
-      setApplications(allApps.filter((app) => app.studentId === parsed.id));
-    }
-
-    const storedHostels: Hostel[] = JSON.parse(
-      localStorage.getItem("hostels") || "[]"
-    );
-    setHostels(storedHostels);
+    setHostels(safeParse<Hostel[]>("hostels", []));
+    setStudent(safeParse<StudentProfile | null>("studentProfile", null)); // ✅ allows null
+    setAllStudents(safeParse<StudentProfile[]>("allStudents", []));
   }, []);
 
-  const handleApply = (hostel: Hostel) => {
-    if (!profile) return;
-
-    if (hostel.availableBeds <= 0) {
-      toast.error("No available beds in this hostel.");
-      return;
-    }
-
-    const newApp: Application = {
-      studentId: profile.id,
-      studentName: profile.fullName,
-      hostelId: hostel.id,
-      hostelName: hostel.name,
-      status: "Pending Approval",
-      date: new Date().toLocaleDateString(),
-    };
-
-    const allApps: Application[] = JSON.parse(
-      localStorage.getItem("accommodationApplications") || "[]"
-    );
-
-    const alreadyApplied = allApps.some(
-      (app) =>
-        app.studentId === profile.id &&
-        app.hostelId === hostel.id &&
-        app.status === "Pending Approval"
-    );
-    if (alreadyApplied) {
-      toast.error("You already have a pending application for this hostel.");
-      return;
-    }
-
-    const updatedApps = [...allApps, newApp];
-    localStorage.setItem("accommodationApplications", JSON.stringify(updatedApps));
-    setApplications(updatedApps.filter((app) => app.studentId === profile.id));
-
-    toast.success(`Applied successfully for ${hostel.name}`);
+  const saveAllStudents = (updated: StudentProfile[]) => {
+    setAllStudents(updated);
+    localStorage.setItem("allStudents", JSON.stringify(updated));
   };
 
-  if (!profile) {
-    return <p className="text-center text-gray-500 mt-10">Loading accommodation...</p>;
-  }
+  const handleBookHostel = (hostelId: string) => {
+    if (!student) {
+      toast.error("Please log in to book a hostel.");
+      return;
+    }
 
-  const availableHostels = hostels.filter((h) => h.gender === profile.gender);
+    if (student.hostel) {
+      toast.error(`You have already booked ${student.hostel}.`);
+      return;
+    }
+
+    const hostel = hostels.find((h) => h.id === hostelId);
+    if (!hostel) return;
+
+    // Gender restriction
+    if (hostel.gender !== student.gender) {
+      toast.error(`This hostel is for ${hostel.gender} students only.`);
+      return;
+    }
+
+    // Count occupancy
+    const occupied = allStudents.filter((s) => s.hostel === hostel.name).length;
+    if (occupied >= hostel.capacity) {
+      toast.error("Sorry, this hostel is already full.");
+      return;
+    }
+
+    // Assign hostel
+    const updatedStudent = { ...student, hostel: hostel.name };
+    setStudent(updatedStudent);
+    localStorage.setItem("studentProfile", JSON.stringify(updatedStudent));
+
+    const updatedAllStudents = allStudents.map((s) =>
+      s.id === updatedStudent.id ? updatedStudent : s
+    );
+    saveAllStudents(updatedAllStudents);
+
+    toast.success(`You have successfully booked ${hostel.name}!`);
+  };
 
   return (
-    <main className="max-w-5xl mx-auto p-6 mt-10 space-y-8">
-      {/* Welcome Header */}
-      <Card className="shadow-lg bg-gradient-to-r from-indigo-500 to-indigo-700 text-white">
-        <CardContent className="py-6">
-          <h1 className="text-2xl font-bold">Hostel Accommodation 🏠</h1>
-          <p className="text-sm mt-2">
-            Welcome {profile.fullName.split(" ")[0]}! Choose a hostel suitable for you below.
-          </p>
-        </CardContent>
-      </Card>
+    <main className="max-w-4xl mx-auto p-6 mt-10 space-y-6">
+      <h1 className="text-2xl font-bold text-indigo-600">🏠 Book a Hostel</h1>
 
-      {/* Available Hostels */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Available Hostels</h2>
-        {availableHostels.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {availableHostels.map((hostel) => (
-              <Card key={hostel.id} className="shadow-md">
-                <CardHeader className="font-semibold flex items-center justify-between">
-                  <span>{hostel.name}</span>
-                  <Users className="text-indigo-600" />
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                  <p>
-                    Capacity: {hostel.capacity} | Beds Available:{" "}
-                    <span
-                      className={
-                        hostel.availableBeds > 0
-                          ? "text-green-600 font-semibold"
-                          : "text-red-600 font-semibold"
-                      }
-                    >
-                      {hostel.availableBeds}
-                    </span>
-                  </p>
-                  <Button
-                    onClick={() => handleApply(hostel)}
-                    disabled={hostel.availableBeds <= 0}
-                    className="w-full"
-                  >
-                    {hostel.availableBeds > 0 ? "Apply" : "No Beds Available"}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 text-sm">No hostels available yet.</p>
-        )}
-      </section>
+      {hostels.length > 0 ? (
+        <div className="space-y-4">
+          {hostels.map((hostel) => {
+            const occupied = allStudents.filter((s) => s.hostel === hostel.name).length;
+            const available = hostel.capacity - occupied;
 
-      <Separator />
-
-      {/* Application History */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Your Applications</h2>
-        {applications.length > 0 ? (
-          <div className="space-y-3">
-            {applications.map((app, idx) => (
-              <Card key={idx} className="shadow-sm">
-                <CardContent className="flex justify-between items-center py-3">
+            return (
+              <Card key={hostel.id} className="shadow-sm p-4">
+                <div className="flex justify-between items-center">
                   <div>
-                    <p className="font-semibold">{app.hostelName}</p>
-                    <p className="text-xs text-gray-500">{app.date}</p>
+                    <p className="font-semibold">{hostel.name}</p>
+                    <p className="text-sm text-gray-600">
+                      Capacity: {hostel.capacity} | Occupied: {occupied} | Available: {available}
+                    </p>
+                    <p className="text-sm capitalize">Gender: {hostel.gender}</p>
                   </div>
-                  <span
-                    className={
-                      app.status === "Approved"
-                        ? "text-green-600 font-semibold"
-                        : app.status === "Declined"
-                        ? "text-red-600 font-semibold"
-                        : "text-yellow-600 font-semibold"
-                    }
+                  <Button
+                    disabled={available === 0 || !!student?.hostel}
+                    onClick={() => handleBookHostel(hostel.id)}
                   >
-                    {app.status}
-                  </span>
-                </CardContent>
+                    {available === 0 ? "Full" : student?.hostel ? "Already Booked" : "Book"}
+                  </Button>
+                </div>
               </Card>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500">No applications yet.</p>
-        )}
-      </section>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-gray-500 text-sm">No hostels available at the moment.</p>
+      )}
     </main>
   );
 }

@@ -1,106 +1,191 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Admin } from "@/types";
-import { loadAdmins, saveAdminProfile, saveAllAdmins } from "@/utils/auth";
+import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
+
+type AdminProfile = {
+  adminId: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  password: string;
+  department: string;
+  address: string;
+};
+
+const ADMINS_KEY = "adminProfiles";
+const ACTIVE_ADMIN_KEY = "adminProfile";
 
 export default function AdminRegisterPage() {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<AdminProfile>({
+    adminId: "",
     fullName: "",
-    id: "",
     email: "",
+    phone: "",
     password: "",
+    department: "",
+    address: "",
   });
-
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (Object.values(form).some((v) => v.trim() === "")) {
-      toast.error("All fields are required.");
+    if (form.password !== confirmPassword) {
+      toast.error("Passwords do not match!");
       return;
     }
 
-    const admins = loadAdmins();
-    const idTaken = admins.some((admin) => admin.id === form.id.trim());
-    const emailTaken = admins.some((admin) => admin.email === form.email.trim());
+    const existing: AdminProfile[] = JSON.parse(
+      localStorage.getItem(ADMINS_KEY) || "[]"
+    );
 
-    if (idTaken || emailTaken) {
-      toast.error("Admin ID or email already exists.");
+    if (existing.some((a) => a.adminId === form.adminId)) {
+      toast.error("Admin ID already registered!");
       return;
     }
 
-    const newAdmin: Admin = {
-      id: form.id.trim(),
-      fullName: form.fullName.trim(),
-      email: form.email.trim(),
-      password: form.password,
-      phone: "",
-      address: "",
-      gender: "male",
-      dob: "",
-      department: "",
-      post: "",
-      image: "",
-    };
+    const updated = [...existing, form];
+    localStorage.setItem(ADMINS_KEY, JSON.stringify(updated));
+    localStorage.setItem(ACTIVE_ADMIN_KEY, JSON.stringify(form));
 
-    const updated = [...admins, newAdmin];
-    saveAllAdmins(updated); // ✅ Save to adminAccounts
-    saveAdminProfile(newAdmin); // ✅ Save current admin
-
-    toast.success("Registration successful!");
-    setTimeout(() => {
-      router.push("/admin"); // ✅ Go directly to admin page
-    }, 500);
+    toast.success("Admin registration successful!");
+    router.push("/admin");
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 to-white px-4">
-      <div className="w-full max-w-md bg-white border shadow-lg rounded-lg p-6 space-y-6">
-        <h1 className="text-2xl font-bold text-indigo-700 text-center">Register Admin</h1>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-600 to-purple-700">
+      <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 space-y-6">
+        <h2 className="text-2xl font-bold text-center text-indigo-600">
+          Admin Registration
+        </h2>
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input name="fullName" placeholder="Full Name" value={form.fullName} onChange={handleChange} />
-          <Input name="id" placeholder="Admin ID" value={form.id} onChange={handleChange} />
-          <Input name="email" placeholder="Email" value={form.email} onChange={handleChange} type="email" />
-          <div className="relative">
+          <div>
+            <Label>Admin ID</Label>
             <Input
-              name="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={form.password}
+              name="adminId"
+              value={form.adminId}
               onChange={handleChange}
+              required
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
           </div>
-          <Button type="submit" className="w-full bg-indigo-600 text-white">
+          <div>
+            <Label>Full Name</Label>
+            <Input
+              name="fullName"
+              value={form.fullName}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div>
+            <Label>Email</Label>
+            <Input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div>
+            <Label>Phone Number</Label>
+            <Input
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div>
+            <Label>Department / Role</Label>
+            <Input
+              name="department"
+              value={form.department}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div>
+            <Label>Address</Label>
+            <Input
+              name="address"
+              value={form.address}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          {/* Password */}
+          <div>
+            <Label>Password</Label>
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                required
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+          {/* Confirm Password */}
+          <div>
+            <Label>Confirm Password</Label>
+            <div className="relative">
+              <Input
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+          >
             Register
           </Button>
         </form>
-        <p className="text-sm text-center text-gray-500">
+
+        <p className="text-center text-sm text-gray-600">
           Already have an account?{" "}
           <a href="/login" className="text-indigo-600 hover:underline">
             Login
           </a>
         </p>
       </div>
-    </main>
+    </div>
   );
 }

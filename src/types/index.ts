@@ -40,6 +40,9 @@ export interface StudentProfile {
   college: string;
   id: string;
   fullName: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   matricNumber: string;
   department: string;
   level: string;
@@ -61,6 +64,9 @@ export interface StudentProfile {
 export interface Admin {
   id: string;
   fullName: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   password: string;
   email: string;
   phone: string;

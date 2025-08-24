@@ -1,163 +1,126 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
-import { loadAdmins, loadStudent, saveAdminProfile, seedAdminAccounts } from "@/utils/auth";
-import { saveStudentProfile } from "@/utils/localstorage";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { toast } from "sonner";
+
+
+type StudentProfile = {
+  id: string;
+  password: string;
+};
+
+type AdminProfile = {
+  id: string;
+  password: string;
+};
+
 
 export default function LoginPage() {
-  const [role, setRole] = useState<"student" | "admin">("student");
-  const [form, setForm] = useState({ id: "", name: "", password: "" });
+   const router = useRouter();
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter();
 
-  useEffect(() => {
-    seedAdminAccounts(); // Seeds a default admin if needed
-  }, []);
+  const handleLogin = () => {
+    const students: StudentProfile[] = JSON.parse(
+      localStorage.getItem("studentProfiles") || "[]"
+    );
+    const admins: AdminProfile[] = JSON.parse(
+      localStorage.getItem("adminProfiles") || "[]"
+    );
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
+    const student = students.find((s) => s.password === password);
+    const admin = admins.find((a) => a.password === password);
 
-  const handleRoleToggle = () => {
-    setRole((prev) => (prev === "student" ? "admin" : "student"));
-    setForm({ id: "", name: "", password: "" });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const { id, name, password } = form;
-
-    if (!id || !name || !password) {
-      toast.error("Please fill in all fields.");
-      return;
-    }
-
-    if (role === "student") {
-      const student = loadStudent();
-      const match =
-        student &&
-        student.matricNumber?.trim().toLowerCase() === id.trim().toLowerCase() &&
-        student.fullName?.trim().toLowerCase() === name.trim().toLowerCase() &&
-        student.password === password;
-
-      if (match) {
-        saveStudentProfile(student); // ✅ consistent key
-        toast.success("Welcome back, student!");
-        router.push("/student");
-      } else {
-        toast.error("Invalid student credentials.");
-      }
+    if (student) {
+      localStorage.setItem("studentProfile", JSON.stringify(student));
+      toast.success("Login successful! Redirecting to Student Dashboard...");
+      router.push("/student/dashboard");
+    } else if (admin) {
+      localStorage.setItem("adminProfile", JSON.stringify(admin));
+      toast.success("Login successful! Redirecting to Admin Dashboard...");
+      router.push("/admin/dashboard");
     } else {
-      const admins = loadAdmins();
-      const match = admins.find(
-        (admin) =>
-          admin.id?.trim().toLowerCase() === id.trim().toLowerCase() &&
-          admin.fullName?.trim().toLowerCase() === name.trim().toLowerCase() &&
-          admin.password === password
-      );
-
-      if (match) {
-        saveAdminProfile(match); // ✅ saves under currentAdminProfile
-        toast.success("Welcome, Admin!");
-        router.push("/admin");
-      } else {
-        toast.error("Invalid admin credentials.");
-      }
+      toast.error("Invalid password. Please try again.");
     }
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-100 to-white dark:from-zinc-900 dark:to-zinc-950 px-4">
-      <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-indigo-100 dark:border-zinc-700 rounded-lg shadow-xl p-6 space-y-6">
-        <h1 className="text-2xl font-bold text-center text-indigo-700 dark:text-indigo-400">
-          {role === "student" ? "Student" : "Admin"} Login
-        </h1>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-500 to-purple-600">
+      <Card className="w-full max-w-md p-6 shadow-xl bg-white dark:bg-gray-900 rounded-2xl">
+        <CardHeader>
+          <h1 className="text-2xl font-bold text-center text-indigo-600 dark:text-indigo-400">
+            Welcome Back
+          </h1>
+          <p className="text-sm text-center text-gray-500 dark:text-gray-400">
+            Please enter your password to continue
+          </p>
+        </CardHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-300 mb-1">
-              {role === "student" ? "Matric Number" : "Admin ID"}
-            </label>
-            <Input
-              name="id"
-              placeholder={role === "student" ? "e.g. 22/0000" : "e.g. admin001"}
-              value={form.id}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-300 mb-1">Full Name</label>
-            <Input
-              name="name"
-              placeholder="e.g. Jane Doe"
-              value={form.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-600 dark:text-gray-300 mb-1">Password</label>
-            <div className="relative">
+        <CardContent>
+          <div className="mb-4">
+            <Label>Password</Label>
+            <div className="flex items-center gap-2">
               <Input
-                name="password"
                 type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                value={form.password}
-                onChange={handleChange}
-                required
               />
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+              </Button>
             </div>
           </div>
+        </CardContent>
 
-          <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+        <CardFooter className="flex flex-col gap-2">
+          <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white" onClick={handleLogin}>
             Login
           </Button>
+          <Button variant="link" className="text-indigo-600 hover:underline">
+            Forgot password?
+          </Button>
 
-          <div className="text-center text-sm text-muted-foreground">
-            {role === "student" ? (
-              <>
-                Are you an admin?{" "}
-                <button type="button" onClick={handleRoleToggle} className="text-indigo-600 hover:underline">
-                  Login as Admin
-                </button>
-              </>
-            ) : (
-              <>
-                Are you a student?{" "}
-                <button type="button" onClick={handleRoleToggle} className="text-indigo-600 hover:underline">
-                  Login as Student
-                </button>
-              </>
-            )}
-          </div>
-
-          <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-            Don’t have an account?{" "}
-            <a
-              href={role === "student" ? "/register-student" : "/register-admin"}
-              className="text-indigo-600 hover:underline"
-            >
-              Create {role === "student" ? "Student" : "Admin"} Account
-            </a>
-          </div>
-        </form>
-      </div>
-    </main>
+          {/* Register Dialog */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="link" className="text-indigo-600 hover:underline">
+                Don’t have an account? Register
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Select Account Type</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col gap-3">
+                <Button
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                  onClick={() => (window.location.href = "/register-student")}
+                >
+                  Register as Student
+                </Button>
+                <Button
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                  onClick={() => (window.location.href = "/register-admin")}
+                >
+                  Register as Admin
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }

@@ -1,8 +1,10 @@
 import { Admin, StudentProfile } from "@/types";
 
 const STUDENT_KEY = "studentProfile";
-const ADMIN_KEY = "adminProfiles";
-const CURRENT_ADMIN_KEY = "currentAdminProfile";
+const ADMIN_KEY = "adminProfiles";        // all admins
+const CURRENT_ADMIN_KEY = "currentAdminProfile"; // currently logged in admin
+
+/* ================= STUDENT ================= */
 
 // Load a single student profile
 export function loadStudent(): StudentProfile | null {
@@ -13,13 +15,29 @@ export function loadStudent(): StudentProfile | null {
   return null;
 }
 
-// Load all admin accounts
+// Save a single student profile
+export function saveStudent(profile: StudentProfile) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STUDENT_KEY, JSON.stringify(profile));
+  }
+}
+
+/* ================= ADMINS ================= */
+
+// Load all registered admin accounts
 export function loadAdmins(): Admin[] {
   if (typeof window !== "undefined") {
     const data = localStorage.getItem(ADMIN_KEY);
     return data ? JSON.parse(data) : [];
   }
   return [];
+}
+
+// Save all admins (for registration or updates)
+export function saveAllAdmins(admins: Admin[]) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(ADMIN_KEY, JSON.stringify(admins));
+  }
 }
 
 // Load the currently logged-in admin
@@ -35,37 +53,5 @@ export function loadAdminProfile(): Admin | null {
 export function saveAdminProfile(profile: Admin) {
   if (typeof window !== "undefined") {
     localStorage.setItem(CURRENT_ADMIN_KEY, JSON.stringify(profile));
-  }
-}
-
-// Save or update adminProfiles (e.g., during registration)
-export function saveAllAdmins(admins: Admin[]) {
-  if (typeof window !== "undefined") {
-    localStorage.setItem(ADMIN_KEY, JSON.stringify(admins));
-  }
-}
-
-// Seed default admin (only if adminProfiles is empty)
-export function seedAdminAccounts() {
-  if (typeof window !== "undefined") {
-    const existing = localStorage.getItem(ADMIN_KEY);
-    if (!existing) {
-      const defaultAdmins: Admin[] = [
-        {
-          id: "admin001",
-          fullName: "Solomon Kachala",
-          email: "ishaku85@gmail.com",
-          password: "Ishaku123.",
-          phone: "",
-          address: "",
-          gender: "male",
-          dob: "",
-          department: "",
-          post: "",
-          image: ""
-        }
-      ];
-      saveAllAdmins(defaultAdmins);
-    }
   }
 }

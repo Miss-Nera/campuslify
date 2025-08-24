@@ -1,21 +1,24 @@
 "use client";
 
+import { SidebarProvider } from "@/components/ui/sidebar";
 import AdminNavBar from "./AdminNavBar";
 import AdminSidebar from "./AdminSideBar";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <AdminSidebar />
+    <SidebarProvider>
+      <div className="flex min-h-screen">
+        {/* Sidebar */}
+        <AdminSidebar />
 
-      <div className="flex-1 flex flex-col">
-        {/* Navbar */}
-        <AdminNavBar />
+        <div className="flex-1 flex flex-col">
+          {/* Navbar */}
+          <AdminNavBar />
 
-        {/* Page Content */}
-        <main className="flex-1 p-6">{children}</main>
+          {/* Page Content */}
+          <main className="flex-1 p-6">{children}</main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }

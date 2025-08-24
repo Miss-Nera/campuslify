@@ -1,240 +1,148 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Image from "next/image";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from "next/link";
 import { StudentProfile } from "@/types";
-import { User, Mail, Phone, Calendar, MapPin } from "lucide-react";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  loadStudentProfile,
-  saveStudentProfile,
-} from "@/utils/localstorage";
 
-
-const defaultProfile: StudentProfile = {
-  id: "abc123",
-  fullName: "John Doe",
-  matricNumber: "M123456",
-  department: "Computer Science",
-  level: "300",
-  email: "johndoe@example.com",
-  phone: "08012345678",
-  address: "Campus Road",
-  gender: "male",
-  dob: "2000-01-01",
-  hostel: "Block A",
-  college: "Engineering",
-  password: "password123",
-  image: "/default.jpg",
-
-  // ✅ This is the important line:
-  payments: [],
-};
-
-
-export default function StudentProfilePage() {
-  const [profile, setProfile] = useState<StudentProfile>(defaultProfile);
-  const [isEditing, setIsEditing] = useState(false);
-  const [image, setImage] = useState<string>("");
+export default function StudentDashboard() {
+  const [profile, setProfile] = useState<StudentProfile | null>(null);
 
   useEffect(() => {
-    const stored = loadStudentProfile(); // ✅ correct key and function
-    const storedImg = localStorage.getItem("profileImage");
-
-    if (stored) {
-      setProfile(stored);
-      setImage(stored.image || storedImg || "");
-    } else if (storedImg) {
-      setImage(storedImg);
+    const data = localStorage.getItem("studentProfile");
+    if (data) {
+      setProfile(JSON.parse(data));
     }
   }, []);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setProfile((prev) => ({ ...prev, [name]: value }));
-  };
+  if (!profile) {
+    return (
+      <p className="text-center text-gray-500 dark:text-gray-400 mt-20">
+        Loading dashboard...
+      </p>
+    );
+  }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imgData = reader.result as string;
-        setImage(imgData);
-        setProfile((prev) => ({ ...prev, image: imgData }));
-        localStorage.setItem("profileImage", imgData);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSave = () => {
-    if (!profile.fullName || !profile.matricNumber || !profile.email) {
-      toast.error("Please fill all required fields.");
-      return;
-    }
-
-    saveStudentProfile(profile); // ✅ correct save function
-    toast.success("Profile saved successfully.");
-    setIsEditing(false);
-  };
+  const latestPayment = profile.payments?.[profile.payments.length - 1];
 
   return (
-    <main className="max-w-2xl mx-auto mt-10 px-4 sm:px-6 transition-all duration-300">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 tracking-tight">
-          Student Profile
-        </h1>
-        <ThemeToggle />
+    <main className="max-w-6xl mx-auto p-6 mt-8 space-y-8">
+      {/* Greeting */}
+      <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+        Welcome back, {profile.fullName.split(" ")[0]} 👋
+      </h1>
+
+      {/* Profile Overview with Avatar */}
+      <Card className="shadow-md">
+        <CardHeader className="text-lg font-semibold">Profile Overview</CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={profile.image || "/default-avatar.png"} />
+              <AvatarFallback>
+                {profile.fullName.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-semibold text-lg">{profile.fullName}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {profile.department} — {profile.level}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-700 dark:text-gray-300">
+            <p><strong>Matric No:</strong> {profile.matricNumber}</p>
+            <p><strong>Email:</strong> {profile.email}</p>
+            <p><strong>Gender:</strong> {profile.gender}</p>
+            <p><strong>Hostel:</strong> {profile.hostel}</p>
+            <p><strong>College:</strong> {profile.college}</p>
+            <p><strong>DOB:</strong> {profile.dob}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="shadow-md">
+          <CardHeader className="font-semibold">Accommodation</CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Apply or check hostel allocation.
+            </p>
+            <Link href="/student/accommodation">
+              <Button className="mt-3 w-full">Manage Accommodation</Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-md">
+          <CardHeader className="font-semibold">Academic Calendar</CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Stay updated with key semester events.
+            </p>
+            <Link href="/student/calendar">
+              <Button className="mt-3 w-full">View Calendar</Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-md">
+          <CardHeader className="font-semibold">Results & CGPA</CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Track your performance and CGPA progress.
+            </p>
+            <Link href="/student/results">
+              <Button className="mt-3 w-full">Check Results</Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
 
-      <Card className="shadow-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-zinc-900 transition duration-300">
-        <CardHeader className="flex flex-col items-center gap-4 py-6">
-          <div className="relative w-28 h-28 rounded-full overflow-hidden ring-2 ring-indigo-400 dark:ring-indigo-600">
-            <Image
-              src={image || "/default-avatar.png"}
-              alt="Profile"
-              fill
-              className="object-cover"
-            />
-            {isEditing && (
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="absolute inset-0 opacity-0 cursor-pointer"
-              />
-            )}
-          </div>
-          <Button variant="outline" onClick={() => setIsEditing(!isEditing)}>
-            {isEditing ? "Cancel" : "Edit Profile"}
-          </Button>
-        </CardHeader>
-
-        <CardContent className="space-y-6 px-6 pb-8">
-          <Accordion type="multiple" className="w-full">
-            {/* Personal Info */}
-            <AccordionItem value="personal">
-              <AccordionTrigger className="text-indigo-600 dark:text-indigo-400 font-medium">
-                Personal Information
-              </AccordionTrigger>
-              <AccordionContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                {[
-                  { label: "Full Name", name: "fullName", icon: <User />, required: true },
-                  { label: "Matric Number", name: "matricNumber", icon: "#️⃣", required: true },
-                  { label: "Email", name: "email", icon: <Mail />, required: true },
-                  { label: "Phone", name: "phone", icon: <Phone /> },
-                ].map((field) => (
-                  <div key={field.name}>
-                    <Label className="flex gap-1 items-center text-sm text-indigo-700 dark:text-indigo-300">
-                      {field.icon} {field.label}
-                    </Label>
-                    <Input
-                      name={field.name}
-                      value={String(profile[field.name as keyof StudentProfile] ?? "")}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      required={field.required}
-                      className="focus:ring-indigo-500"
-                    />
-                  </div>
-                ))}
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* Academic & Other Info */}
-            <AccordionItem value="academic">
-              <AccordionTrigger className="text-indigo-600 dark:text-indigo-400 font-medium">
-                Academic & Other Info
-              </AccordionTrigger>
-              <AccordionContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                <div>
-                  <Label className="text-sm text-indigo-700 dark:text-indigo-300">Department</Label>
-                  <Input
-                    name="department"
-                    value={profile.department}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm text-indigo-700 dark:text-indigo-300">Level</Label>
-                  <Input
-                    name="level"
-                    value={profile.level}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="focus:ring-indigo-500"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm text-indigo-700 dark:text-indigo-300">Gender</Label>
-                  <select
-                    name="gender"
-                    value={profile.gender}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-gray-800 dark:text-gray-200"
-                  >
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                  </select>
-                </div>
-                <div>
-                  <Label className="flex gap-1 items-center text-sm text-indigo-700 dark:text-indigo-300">
-                    <Calendar /> Date of Birth
-                  </Label>
-                  <Input
-                    type="date"
-                    name="dob"
-                    value={profile.dob || ""}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="focus:ring-indigo-500"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <Label className="flex gap-1 items-center text-sm text-indigo-700 dark:text-indigo-300">
-                    <MapPin /> Address
-                  </Label>
-                  <Input
-                    name="address"
-                    value={profile?.address || ""}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className="focus:ring-indigo-500"
-                  />
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-
-          {isEditing && (
-            <div className="text-right mt-6">
-              <Button
-                onClick={handleSave}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-300"
+      {/* Latest Payment */}
+      <Card className="shadow-md">
+        <CardHeader className="text-lg font-semibold">Latest Payment</CardHeader>
+        <CardContent className="text-sm text-gray-700 dark:text-gray-300">
+          {latestPayment ? (
+            <div className="flex justify-between items-center">
+              <div>
+                <p><strong>Type:</strong> {latestPayment.type}</p>
+                <p><strong>Amount:</strong> ₦{latestPayment.amount}</p>
+                <p><strong>Date:</strong> {latestPayment.date}</p>
+              </div>
+              <Badge
+                variant={
+                  latestPayment.status.toLowerCase() === "paid"
+                    ? "default"
+                    : "destructive"
+                }
               >
-                Save Changes
-              </Button>
+                {latestPayment.status}
+              </Badge>
             </div>
+          ) : (
+            <p>No payments made yet.</p>
           )}
         </CardContent>
       </Card>
+
+      {/* Quick Links */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Link href="/student/payment">
+          <Button className="w-full">Make a Payment</Button>
+        </Link>
+        <Link href="/student/paymentHistory">
+          <Button variant="outline" className="w-full">Payment History</Button>
+        </Link>
+        <Link href="/student/profile">
+          <Button variant="outline" className="w-full">Edit Profile</Button>
+        </Link>
+      </div>
     </main>
   );
 }

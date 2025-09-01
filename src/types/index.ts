@@ -6,22 +6,15 @@ export type Payment = {
   status: "Paid" | "Pending" | "Declined";
 }
 
-export type Hostel = {
+export interface HostelRoom {
+  students: string;
   id: string;
   name: string;
   capacity: number;
-  gender: "male" | "female";
-  availableBeds: number;
-};
-
-export type Application = {
-  studentId: string;
-  studentName: string;
-  hostelId: string;
-  hostelName: string;
-  status: "Pending Approval" | "Approved" | "Declined";
-  date: string;
-};
+  occupants: string[];
+  roomNumber: string;
+  status: "available" | "occupied" | "maintenance";
+}
 
 export interface CourseResult {
   name: string;
@@ -59,10 +52,12 @@ export interface StudentProfile {
   payments: Payment[];
    emergencyContact: string;
   roomId?: string;
+  imageUrl?: string;
+  accommodation?: Accommodation; // ✅ reference accommodation
 }
 
 export interface Admin {
-  id: string;
+  adminId: string;
   fullName: string;
   firstName?: string;
   middleName?: string;
@@ -77,14 +72,12 @@ export interface Admin {
   post: string;
   image?: string;
 }
-export interface HostelRoom {
-  students: string;
-  id: string;
-  name: string;         // e.g., "Room A1"
-  capacity: number;     // e.g., 4
-  occupants: string[];  // student IDs (to fetch from studentProfiles)
-  roomNumber: string;
-  status: "available" | "occupied" | "maintenance"; // ✅ Added
-}
 
+export interface Accommodation {
+  hostelId: string;
+  hostelName: string;
+  roomId: string;
+  roomName: string;
+  paymentId: string; // link to the payment record
+}
 

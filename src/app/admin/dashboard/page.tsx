@@ -3,12 +3,11 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-// import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 
 type AdminProfile = {
-  id: string;
+  adminId: string;       // Make sure this matches the registration
   fullName: string;
   email: string;
   phone: string;
@@ -35,7 +34,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const adminData = localStorage.getItem(ACTIVE_ADMIN_KEY);
-    if (adminData) setProfile(JSON.parse(adminData));
+    if (adminData) {
+      const parsed: AdminProfile = JSON.parse(adminData);
+      setProfile(parsed);
+    }
 
     const studentData = localStorage.getItem(STUDENTS_KEY);
     if (studentData) setStudents(JSON.parse(studentData));
@@ -81,7 +83,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-700 dark:text-gray-300">
-            <p><strong>Admin ID:</strong> {profile.id}</p>
+            <p><strong>Admin ID:</strong> {profile.adminId}</p>
             <p><strong>Email:</strong> {profile.email}</p>
             <p><strong>Phone:</strong> {profile.phone}</p>
             <p><strong>Address:</strong> {profile.address}</p>

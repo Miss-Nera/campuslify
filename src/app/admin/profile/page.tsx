@@ -71,7 +71,7 @@ export default function EditAdminProfilePage() {
 
     // Update admin list
     const admins = loadAdmins();
-    const updatedAdmins = admins.map((a) => (a.id === toSave.id ? toSave : a));
+    const updatedAdmins = admins.map((a) => (a.adminId === toSave.adminId ? toSave : a));
     saveAllAdmins(updatedAdmins);
 
     toast.success("Admin profile updated successfully");
@@ -140,7 +140,16 @@ export default function EditAdminProfilePage() {
 
           {/* Contact */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+             <div>
+            <Label htmlFor="adminId">Admin ID</Label>
+            <Input
+              id="adminId"
+              name="adminId"
+              value={profile.adminId}
+              readOnly
+              className="bg-gray-100 cursor-not-allowed"
+            />
+          </div>
               <Label>Date of Birth</Label>
                 <Input
                     type="date"
@@ -164,7 +173,7 @@ export default function EditAdminProfilePage() {
                 onChange={(e) => handleChange("phone", e.target.value)}
               />
             </div>
-          </div>
+          {/* </div> */}
 
           {/* Work Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

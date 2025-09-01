@@ -1,24 +1,26 @@
+// app/admin/layout.tsx
 "use client";
 
-import { SidebarProvider } from "@/components/ui/sidebar";
-import StudentNavBar from "./StudentNavBar";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import StudentSidebar from "./StudentSideBar";
+import StudentNavBar from "./StudentNavBar";
 
-export default function StudentLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen">
-        {/* Sidebar */}
-        <StudentSidebar />
+      {/* Left: Sidebar controls its own width */}
+      <StudentSidebar />
 
-        <div className="flex-1 flex flex-col">
-          {/* Navbar */}
-          <StudentNavBar />
+      {/* Right: Inset handles spacing next to sidebar */}
+      <SidebarInset className="flex min-h-screen flex-1 flex-col">
+        {/* Navbar stays at the top with fixed height */}
+        <StudentNavBar />
 
-          {/* Page Content */}
-          <main className="flex-1 p-6">{children}</main>
-        </div>
-      </div>
+        {/* Page content scrolls; navbar doesn’t shrink */}
+        <main className="flex-1 min-h-0 overflow-auto p-6 bg-gray-50">
+          {children}
+        </main>
+      </SidebarInset>
     </SidebarProvider>
   );
 }

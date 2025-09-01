@@ -1,8 +1,8 @@
 import { Admin, StudentProfile } from "@/types";
 
 const STUDENT_KEY = "studentProfile";
-const ADMIN_KEY = "adminProfiles";        // all admins
-const CURRENT_ADMIN_KEY = "currentAdminProfile"; // currently logged in admin
+const ADMIN_KEY = "adminProfiles";          // all admins
+const CURRENT_ADMIN_KEY = "currentAdminProfile"; // logged-in admin
 
 /* ================= STUDENT ================= */
 
@@ -53,5 +53,13 @@ export function loadAdminProfile(): Admin | null {
 export function saveAdminProfile(profile: Admin) {
   if (typeof window !== "undefined") {
     localStorage.setItem(CURRENT_ADMIN_KEY, JSON.stringify(profile));
+
+    // 🔥 also update inside adminProfiles
+    const admins = loadAdmins();
+    const index = admins.findIndex((a) => a.id === profile.id);
+    if (index !== -1) {
+      admins[index] = profile;
+      saveAllAdmins(admins);
+    }
   }
 }

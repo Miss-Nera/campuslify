@@ -1,24 +1,26 @@
+// app/admin/layout.tsx
 "use client";
 
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import AdminNavBar from "./AdminNavBar";
 import AdminSidebar from "./AdminSideBar";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen">
-        {/* Sidebar */}
-        <AdminSidebar />
+      {/* Left: Sidebar controls its own width */}
+      <AdminSidebar />
 
-        <div className="flex-1 flex flex-col">
-          {/* Navbar */}
-          <AdminNavBar />
+      {/* Right: Inset handles spacing next to sidebar */}
+      <SidebarInset className="flex min-h-screen flex-1 flex-col">
+        {/* Navbar stays at the top with fixed height */}
+        <AdminNavBar />
 
-          {/* Page Content */}
-          <main className="flex-1 p-6">{children}</main>
-        </div>
-      </div>
+        {/* Page content scrolls; navbar doesn’t shrink */}
+        <main className="flex-1 min-h-0 overflow-auto p-6 bg-gray-50">
+          {children}
+        </main>
+      </SidebarInset>
     </SidebarProvider>
   );
 }

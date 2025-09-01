@@ -14,6 +14,9 @@ import PasswordInput from "@/components/PasswordInput";
 import { loadStudent, saveStudent } from "@/utils/auth";
 import Link from "next/link";
 
+// Keys for localStorage
+const STUDENTS_KEY = "studentProfiles";   // all students list
+
 export default function EditStudentProfilePage() {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
 
@@ -46,29 +49,42 @@ export default function EditStudentProfilePage() {
     if (!profile) return;
     setProfile({ ...profile, [key]: value });
   };
-
   const handleSave = () => {
-    if (!profile) return;
+  if (!profile) return;
 
-    // Persist both: split fields + computed fullName (for existing pages)
-    const toSave: StudentProfile = {
-      ...profile,
-      fullName: composedFullName,
-    };
-
-    // Basic guards (you can extend validation as needed)
-    if (!toSave.firstName || !toSave.lastName) {
-      toast.error("Please enter at least First Name and Surname");
-      return;
-    }
-    if (!toSave.email) {
-      toast.error("Email is required");
-      return;
-    }
-
-    saveStudent(toSave);
-    toast.success("Profile updated successfully");
+  // Persist both: split fields + computed fullName (for existing pages)
+  const toSave: StudentProfile = {
+    ...profile,
+    fullName: composedFullName,
   };
+
+  // Basic guards
+  if (!toSave.firstName || !toSave.lastName) {
+    toast.error("Please enter at least First Name and Surname");
+    return;
+  }
+  if (!toSave.email) {
+    toast.error("Email is required");
+    return;
+  }
+
+  // Save active profile
+  saveStudent(toSave);
+
+  // 🔥 Update global studentProfiles list
+  if (typeof window !== "undefined") {
+    const existing = localStorage.getItem(STUDENTS_KEY);
+    let all: StudentProfile[] = existing ? JSON.parse(existing) : [];
+
+    // Replace this student by matricNumber
+    all = all.map((s) => (s.matricNumber === toSave.matricNumber ? toSave : s));
+
+    localStorage.setItem(STUDENTS_KEY, JSON.stringify(all));
+  }
+
+  toast.success("Profile updated successfully");
+};
+
 
   if (!profile) return <p className="text-center text-muted-foreground mt-10">No student profile found.</p>;
 

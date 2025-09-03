@@ -1,169 +1,183 @@
 "use client";
 
-import React, { useState } from "react";
-import { Input } from "@/components/ui/input";
+import React, { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
-interface Student {
-  matricNumber: string;
-  fullName: string;
-  department: string;
-  course?: string;
-  test?: number;
-  assignment?: number;
-  exam?: number;
-  attendance?: number;
-  total?: number;
-  grade?: string;
-}
+type Student = {
+  id: string;
+  matric: string;
+  name: string;
+  ca: number;
+  exam: number;
+  total: number;
+  grade: string;
+};
 
-const RESULTS_KEY = "studentResults";
+type Course = {
+  id: string;
+  code: string;
+  title: string;
+  students: Student[];
+};
+
+const RESULTS_KEY = "lecturerResults";
 
 export default function LecturerResultsPage() {
-  const [students, setStudents] = useState<Student[]>([
-    {
-      matricNumber: "MAT001",
-      fullName: "John Doe",
-      department: "Computer Science",
-    },
-    {
-      matricNumber: "MAT002",
-      fullName: "Jane Smith",
-      department: "Mathematics",
-    },
-  ]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<string>("");
 
-  // handle score or course update
-  const handleChange = (
-    index: number,
-    field: keyof Student,
-    value: string
-  ) => {
-    const updated = [...students];
-    const student = updated[index];
-
-    if (field === "course") {
-      student.course = value;
-    } else if (
-      field === "test" ||
-      field === "assignment" ||
-      field === "exam" ||
-      field === "attendance"
-    ) {
-      student[field] = value === "" ? undefined : Number(value);
+  useEffect(() => {
+    // Load courses + results from localStorage
+    const stored = localStorage.getItem(RESULTS_KEY);
+    if (stored) {
+      setCourses(JSON.parse(stored));
+    } else {
+      // Dummy seed data
+      const dummy: Course[] = [
+        {
+          id: "1",
+          code: "CSC101",
+          title: "Introduction to Computer Science",
+          students: [
+            { id: "s1", matric: "CSC/001", name: "Alice Johnson", ca: 0, exam: 0, total: 0, grade: "" },
+            { id: "s2", matric: "CSC/002", name: "Bob Smith", ca: 0, exam: 0, total: 0, grade: "" },
+          ],
+        },
+        {
+          id: "2",
+          code: "MTH101",
+          title: "Calculus I",
+          students: [
+            { id: "s3", matric: "MTH/005", name: "Jane Doe", ca: 0, exam: 0, total: 0, grade: "" },
+          ],
+        },
+      ];
+      setCourses(dummy);
+      localStorage.setItem(RESULTS_KEY, JSON.stringify(dummy));
     }
+  }, []);
 
-    // recalc total + grade if any score exists
-    const total =
-      (student.test ?? 0) +
-      (student.assignment ?? 0) +
-      (student.exam ?? 0) +
-      (student.attendance ?? 0);
+  const updateScore = (courseId: string, studentId: string, field: "ca" | "exam", value: number) => {
+    setCourses((prev) => {
+      const updated = prev.map((course) => {
+        if (course.id !== courseId) return course;
+        return {
+          ...course,
+          students: course.students.map((s) => {
+            if (s.id !== studentId) return s;
 
-    if (
-      student.test !== undefined ||
-      student.assignment !== undefined ||
-      student.exam !== undefined ||
-      student.attendance !== undefined
-    ) {
-      student.total = total;
+            const newStudent = {
+              ...s,
+              [field]: value,
+            };
 
-      if (total >= 70) student.grade = "A";
-      else if (total >= 60) student.grade = "B";
-      else if (total >= 50) student.grade = "C";
-      else if (total >= 45) student.grade = "D";
-      else if (total >= 40) student.grade = "E";
-      else student.grade = "F";
-    }
+            // auto calculate
+            const total = newStudent.ca + newStudent.exam;
+            let grade = "";
+            if (total >= 70) grade = "A";
+            else if (total >= 60) grade = "B";
+            else if (total >= 50) grade = "C";
+            else if (total >= 45) grade = "D";
+            else if (total >= 40) grade = "E";
+            else grade = "F";
 
-    setStudents(updated);
+            return { ...newStudent, total, grade };
+          }),
+        };
+      });
+
+      localStorage.setItem(RESULTS_KEY, JSON.stringify(updated));
+      return updated;
+    });
   };
 
-  const handleSave = () => {
-    localStorage.setItem(RESULTS_KEY, JSON.stringify(students));
-    alert("Results saved successfully!");
-  };
+  const selectedCourse = courses.find((c) => c.id === selectedCourseId);
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Lecturer Result Entry</h1>
+    <div className="p-6 space-y-6">
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle>Select Course</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Select onValueChange={(v) => setSelectedCourseId(v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Choose a course" />
+            </SelectTrigger>
+            <SelectContent>
+              {courses.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.code} - {c.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
 
-      <table className="w-full border border-gray-300">
-        <thead>
-          <tr className="bg-gray-200">
-            <th className="p-2 border">Matric Number</th>
-            <th className="p-2 border">Full Name</th>
-            <th className="p-2 border">Department</th>
-            <th className="p-2 border">Course</th>
-            <th className="p-2 border">Test</th>
-            <th className="p-2 border">Assignment</th>
-            <th className="p-2 border">Exam</th>
-            <th className="p-2 border">Attendance</th>
-            <th className="p-2 border">Total</th>
-            <th className="p-2 border">Grade</th>
-          </tr>
-        </thead>
-        <tbody>
-          {students.map((student, index) => (
-            <tr key={student.matricNumber} className="text-center">
-              <td className="border p-2">{student.matricNumber}</td>
-              <td className="border p-2">{student.fullName}</td>
-              <td className="border p-2">{student.department}</td>
-              <td className="border p-2">
-                <Input
-                  value={student.course || ""}
-                  onChange={(e) =>
-                    handleChange(index, "course", e.target.value)
-                  }
-                  placeholder="Enter course"
-                />
-              </td>
-              <td className="border p-2">
-                <Input
-                  type="number"
-                  value={student.test ?? ""}
-                  onChange={(e) =>
-                    handleChange(index, "test", e.target.value)
-                  }
-                />
-              </td>
-              <td className="border p-2">
-                <Input
-                  type="number"
-                  value={student.assignment ?? ""}
-                  onChange={(e) =>
-                    handleChange(index, "assignment", e.target.value)
-                  }
-                />
-              </td>
-              <td className="border p-2">
-                <Input
-                  type="number"
-                  value={student.exam ?? ""}
-                  onChange={(e) =>
-                    handleChange(index, "exam", e.target.value)
-                  }
-                />
-              </td>
-              <td className="border p-2">
-                <Input
-                  type="number"
-                  value={student.attendance ?? ""}
-                  onChange={(e) =>
-                    handleChange(index, "attendance", e.target.value)
-                  }
-                />
-              </td>
-              <td className="border p-2">{student.total ?? "-"}</td>
-              <td className="border p-2">{student.grade ?? "-"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <Button className="mt-4" onClick={handleSave}>
-        Save Results
-      </Button>
+      {selectedCourse && (
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle>
+              {selectedCourse.code} - {selectedCourse.title}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border border-gray-200 rounded-lg">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="p-2 text-left">Matric No</th>
+                    <th className="p-2 text-left">Name</th>
+                    <th className="p-2 text-center">CA (30)</th>
+                    <th className="p-2 text-center">Exam (70)</th>
+                    <th className="p-2 text-center">Total</th>
+                    <th className="p-2 text-center">Grade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedCourse.students.map((s) => (
+                    <tr key={s.id} className="border-t">
+                      <td className="p-2">{s.matric}</td>
+                      <td className="p-2">{s.name}</td>
+                      <td className="p-2 text-center">
+                        <Input
+                          type="number"
+                          value={s.ca}
+                          onChange={(e) => updateScore(selectedCourse.id, s.id, "ca", Number(e.target.value))}
+                          className="w-20 text-center"
+                        />
+                      </td>
+                      <td className="p-2 text-center">
+                        <Input
+                          type="number"
+                          value={s.exam}
+                          onChange={(e) => updateScore(selectedCourse.id, s.id, "exam", Number(e.target.value))}
+                          className="w-20 text-center"
+                        />
+                      </td>
+                      <td className="p-2 text-center font-semibold">{s.total}</td>
+                      <td className="p-2 text-center">{s.grade}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-end mt-4">
+              <Button
+                onClick={() => toast.success("Results saved successfully!")}
+                className="rounded-lg"
+              >
+                Save Results
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

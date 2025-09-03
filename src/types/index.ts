@@ -81,3 +81,25 @@ export interface Accommodation {
   paymentId: string; // link to the payment record
 }
 
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  category?: string;
+  date: string; // ISO string
+  author: string; // admin who posted
+};
+// types.ts
+export interface Course {
+  id: string;        // unique ID
+  code: string;      // e.g. CSC101
+  title: string;     // e.g. Introduction to Computer Science
+  units: number;     // credit units
+  lecturer: string;
+}
+
+export interface StudentRegistration {
+  matric: string;      // student matric number
+  registered: Course[]; // list of registered courses
+}
+

@@ -1,125 +1,86 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Calendar, momentLocalizer, EventProps } from "react-big-calendar";
+import moment from "moment";
+import "react-big-calendar/lib/css/react-big-calendar.css";
 
-type CalendarEvent = {
+const EVENTS_KEY = "calendarEvents";
+
+export interface CalendarEvent {
   id: string;
   title: string;
-  date: string; // e.g. "2025-10-01"
-  description: string;
-};
+  start: Date;
+  end: Date;
+  category: "food" | "health" | "exams" | "general";
+}
 
-export default function AcademicCalendarPage() {
+const localizer = momentLocalizer(moment);
+
+export default function StudentCalendar() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   useEffect(() => {
-    const storedEvents: CalendarEvent[] = JSON.parse(
-      localStorage.getItem("calendarEvents") || "[]"
-    );
-    setEvents(storedEvents);
+    const stored = localStorage.getItem(EVENTS_KEY);
+    if (stored) {
+      try {
+        const parsed: CalendarEvent[] = JSON.parse(stored);
+        setEvents(
+          parsed.map((e) => ({
+            ...e,
+            start: new Date(e.start),
+            end: new Date(e.end),
+          }))
+        );
+      } catch (err) {
+        console.error("Failed to load events for student", err);
+      }
+    }
   }, []);
 
-  const today = new Date();
+  // 🎨 Custom styling per event category
+  const eventStyleGetter = (event: CalendarEvent) => {
+    let bg = "bg-indigo-500"; // default
+    if (event.category === "food") bg = "bg-green-500";
+    if (event.category === "health") bg = "bg-red-500";
+    if (event.category === "exams") bg = "bg-yellow-500";
+    if (event.category === "general") bg = "bg-blue-500";
 
-  const upcomingEvents = events
-    .filter((event) => new Date(event.date) >= today)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return {
+      className: `${bg} text-white rounded-md px-2 py-1 shadow-sm`,
+      style: {
+        border: "none",
+        display: "block",
+      },
+    };
+  };
 
-  const pastEvents = events
-    .filter((event) => new Date(event.date) < today)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Custom rendering for event content
+  const EventComponent = ({ event }: EventProps<CalendarEvent>) => (
+    <span className="font-medium">{event.title}</span>
+  );
 
   return (
-    <main className="w-full p-6 space-y-10">
-      {/* Header */}
-      <Card className="shadow-lg bg-gradient-to-r from-indigo-500 to-indigo-700 text-white">
-        <CardContent className="py-6">
-          <h1 className="text-2xl font-bold">📅 Academic Calendar</h1>
-          <p className="text-sm mt-2">
-            Stay updated with upcoming academic events and review past ones.
-          </p>
-        </CardContent>
-      </Card>
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-4">📅 Student Events</h2>
 
-      {/* Upcoming Events */}
-      <section>
-        <h2 className="text-lg font-semibold mb-4 text-indigo-600">
-          Upcoming Events
-        </h2>
-        <Separator className="mb-4" />
-        {upcomingEvents.length > 0 ? (
-          <ScrollArea className="h-[250px] pr-4">
-            <div className="space-y-4">
-              {upcomingEvents.map((event) => {
-                const isToday =
-                  new Date(event.date).toDateString() === today.toDateString();
-                return (
-                  <Card key={event.id} className="shadow-sm">
-                    <CardHeader
-                      className={`font-semibold ${
-                        isToday ? "text-green-600" : "text-indigo-700"
-                      }`}
-                    >
-                      {event.title}
-                    </CardHeader>
-                    <CardContent>
-                      <p
-                        className={`text-sm ${
-                          isToday ? "text-green-600 font-bold" : "text-gray-600"
-                        }`}
-                      >
-                        <strong>Date:</strong>{" "}
-                        {new Date(event.date).toLocaleDateString()}
-                        {isToday && " (Today)"}
-                      </p>
-                      <p className="text-sm mt-2">{event.description}</p>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </ScrollArea>
-        ) : (
-          <p className="text-gray-500 text-sm text-center">
-            🎉 No upcoming events. Stay tuned!
-          </p>
-        )}
-      </section>
-
-      {/* Past Events */}
-      <section>
-        <h2 className="text-lg font-semibold mb-4 text-indigo-600">
-          Past Events
-        </h2>
-        <Separator className="mb-4" />
-        {pastEvents.length > 0 ? (
-          <ScrollArea className="h-[250px] pr-4">
-            <div className="space-y-4">
-              {pastEvents.map((event) => (
-                <Card key={event.id} className="shadow-sm">
-                  <CardHeader className="font-semibold text-gray-700">
-                    {event.title}
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-gray-600">
-                      <strong>Date:</strong>{" "}
-                      {new Date(event.date).toLocaleDateString()}
-                    </p>
-                    <p className="text-sm mt-2">{event.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </ScrollArea>
-        ) : (
-          <p className="text-gray-500 text-sm text-center">
-            📌 No past events recorded.
-          </p>
-        )}
-      </section>
-    </main>
+      {events.length === 0 ? (
+        <p className="text-gray-500 italic">No events available yet.</p>
+      ) : (
+        <div className="h-[600px] border border-gray-200 dark:border-gray-700 rounded-xl shadow-md overflow-hidden bg-white dark:bg-gray-900">
+          <Calendar
+            localizer={localizer}
+            events={events}
+            startAccessor="start"
+            endAccessor="end"
+            style={{ height: "100%" }}
+            eventPropGetter={eventStyleGetter}
+            components={{
+              event: EventComponent,
+            }}
+          />
+        </div>
+      )}
+    </div>
   );
 }

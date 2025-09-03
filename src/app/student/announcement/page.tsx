@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import React, { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 
-type Announcement = {
-  id: number;
+interface Announcement {
+  id: string;
   title: string;
   message: string;
-  date: string;
   category: string;
-};
+  audience: string; // e.g., "All", "300 level"
+  image?: string;
+  date: string;
+}
 
 export default function StudentAnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -18,40 +21,47 @@ export default function StudentAnnouncementsPage() {
   useEffect(() => {
     const stored = localStorage.getItem("announcements");
     if (stored) {
-      setAnnouncements(JSON.parse(stored));
+      try {
+        setAnnouncements(JSON.parse(stored));
+      } catch (error) {
+        console.error("Error parsing announcements:", error);
+      }
     }
   }, []);
 
   return (
-    <div className="w-full space-y-6">
-      <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-        📢 Announcements
-      </h1>
+    <div className="p-6 max-w-5xl mx-auto">
+      <h1 className="text-2xl font-bold mb-6">📢 Announcements</h1>
 
       {announcements.length === 0 ? (
-        <p className="text-gray-500 dark:text-gray-400 text-sm">
-          No announcements at the moment.
-        </p>
+        <p className="text-gray-500">No announcements yet.</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {announcements.map((ann) => (
-            <Card
-              key={ann.id}
-              className="shadow-sm hover:shadow-md transition"
-            >
-              <CardHeader className="flex justify-between items-start">
-                <div>
-                  <h2 className="text-lg font-semibold">{ann.title}</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {new Date(ann.date).toDateString()}
-                  </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {announcements.map((announcement) => (
+            <Card key={announcement.id} className="shadow-lg">
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>{announcement.title}</CardTitle>
+                  <Badge variant="outline">{announcement.category}</Badge>
                 </div>
-                <Badge variant="outline">{ann.category}</Badge>
+                <p className="text-sm text-gray-500">
+                  {new Date(announcement.date).toLocaleDateString()} •{" "}
+                  {announcement.audience}
+                </p>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  {ann.message}
-                </p>
+                {announcement.image && (
+                  <div className="mb-3">
+                    <Image
+                      src={announcement.image}
+                      alt="announcement"
+                      width={500}
+                      height={300}
+                      className="rounded-lg object-cover"
+                    />
+                  </div>
+                )}
+                <p className="text-gray-700">{announcement.message}</p>
               </CardContent>
             </Card>
           ))}

@@ -1,182 +1,146 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Calendar, momentLocalizer } from "react-big-calendar";
+import moment from "moment";
+import "react-big-calendar/lib/css/react-big-calendar.css";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-type Event = {
+const EVENTS_KEY = "calendarEvents";
+const localizer = momentLocalizer(moment);
+
+type CalendarEvent = {
   id: string;
   title: string;
-  date: string;
-  description: string;
+  start: Date;
+  end: Date;
+  category: string;
+  description?: string;
 };
 
-export default function AdminCalendarPage() {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [newEvent, setNewEvent] = useState<Event>({
-    id: "",
-    title: "",
-    date: "",
-    description: "",
-  });
-  const [editingId, setEditingId] = useState<string | null>(null);
+export default function AdminCalendar() {
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState("");
+  const [category, setCategory] = useState("general");
+  const [description, setDescription] = useState("");
 
-  // Load events from localStorage
-  useEffect(() => {
-    const storedEvents: Event[] = JSON.parse(localStorage.getItem("calendarEvents") || "[]");
-    setEvents(storedEvents);
-  }, []);
+ useEffect(() => {
+  const stored = localStorage.getItem(EVENTS_KEY);
+  if (stored) {
+    try {
+      const parsed: CalendarEvent[] = JSON.parse(stored);
 
-  const saveEvents = (updatedEvents: Event[]) => {
-    setEvents(updatedEvents);
-    localStorage.setItem("calendarEvents", JSON.stringify(updatedEvents));
+      setEvents(
+        parsed.map((e) => ({
+          ...e,
+          start: new Date(e.start),
+          end: new Date(e.end),
+        }))
+      );
+    } catch (err) {
+      console.error("Failed to parse events from localStorage", err);
+    }
+  }
+}, []);
+
+  const saveEvents = (newEvents: CalendarEvent[]) => {
+    setEvents(newEvents);
+    localStorage.setItem(EVENTS_KEY, JSON.stringify(newEvents));
   };
 
-  const handleAddOrUpdateEvent = () => {
-    if (!newEvent.title || !newEvent.date) {
-      toast.error("Please fill in both title and date.");
+  const addEvent = () => {
+    if (!title || !date) {
+      toast.error("Title and Date are required!");
       return;
     }
-
-    if (editingId) {
-      // Update existing event
-      const updatedEvents = events.map((event) =>
-        event.id === editingId ? { ...newEvent, id: editingId } : event
-      );
-      saveEvents(updatedEvents);
-      toast.success("Event updated successfully!");
-    } else {
-      // Add new event
-      const eventToAdd = { ...newEvent, id: Date.now().toString() };
-      const updatedEvents = [...events, eventToAdd];
-      saveEvents(updatedEvents);
-      toast.success("Event added successfully!");
-    }
-
-    // Reset form
-    setNewEvent({ id: "", title: "", date: "", description: "" });
-    setEditingId(null);
+    const newEvent: CalendarEvent = {
+      id: Date.now().toString(),
+      title,
+      start: new Date(date),
+      end: new Date(date),
+      category,
+      description,
+    };
+    const updated = [...events, newEvent];
+    saveEvents(updated);
+    setTitle("");
+    setDate("");
+    setCategory("general");
+    setDescription("");
+    toast.success("Event added successfully!");
   };
 
-  const handleEditEvent = (event: Event) => {
-    setNewEvent(event);
-    setEditingId(event.id);
-  };
-
-  const handleDeleteEvent = (id: string) => {
-    const updatedEvents = events.filter((event) => event.id !== id);
-    saveEvents(updatedEvents);
-    toast.success("Event deleted successfully!");
+  const eventStyleGetter = (event: CalendarEvent) => {
+    let backgroundColor = "#4f46e5"; // default indigo
+    if (event.category === "food") backgroundColor = "#16a34a"; 
+    if (event.category === "health") backgroundColor = "#0000F";
+    if (event.category === "exams") backgroundColor = "#ea580c"; 
+    if (event.category === "Urgent") backgroundColor = "#dc2626";
+    return {
+      style: {
+        backgroundColor,
+        borderRadius: "8px",
+        padding: "2px",
+        color: "white",
+      },
+    };
   };
 
   return (
-    <main className="max-w-5xl mx-auto p-6 mt-10 space-y-8">
-      {/* Header */}
-      <Card className="shadow-lg bg-gradient-to-r from-indigo-500 to-indigo-700 text-white">
-        <CardContent className="py-6">
-          <h1 className="text-2xl font-bold">Admin Calendar Management 📅</h1>
-          <p className="text-sm mt-2">Create, edit, and manage events for students.</p>
-        </CardContent>
-      </Card>
-
-      {/* Add/Edit Event Form */}
-      <Card className="shadow-md">
-        <CardHeader className="text-lg font-semibold text-indigo-600">
-          {editingId ? "Edit Event" : "Add New Event"}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="title">Event Title</Label>
-            <Input
-              id="title"
-              value={newEvent.title}
-              onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-              placeholder="e.g. Faculty Orientation"
-            />
-          </div>
-          <div>
-            <Label htmlFor="date">Event Date</Label>
-            <Input
-              id="date"
-              type="date"
-              value={newEvent.date}
-              onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label htmlFor="desc">Description (optional)</Label>
-            <Input
-              id="desc"
-              value={newEvent.description}
-              onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-              placeholder="e.g. Venue: Main Hall"
-            />
-          </div>
-          <Button onClick={handleAddOrUpdateEvent} className="w-full">
-            {editingId ? "Update Event" : "Add Event"}
-          </Button>
-          {editingId && (
-            <Button
-              variant="secondary"
-              className="w-full mt-2"
-              onClick={() => {
-                setEditingId(null);
-                setNewEvent({ id: "", title: "", date: "", description: "" });
-              }}
-            >
-              Cancel Edit
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-
-      <Separator />
-
-      {/* Events List */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4 text-indigo-600">All Events</h2>
-        {events.length > 0 ? (
+    <div className="p-6 space-y-6">
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button>Add Event</Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New Event</DialogTitle>
+          </DialogHeader>
           <div className="space-y-4">
-            {events.map((event) => (
-              <Card key={event.id} className="shadow-sm">
-                <CardHeader className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-lg font-semibold">{event.title}</h3>
-                    <p className="text-sm text-gray-500">{event.date}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditEvent(event)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteEvent(event.id)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-700">
-                    {event.description || "No description."}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
+            <Input placeholder="Event Title" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="general">General</SelectItem>
+                <SelectItem value="food">Food</SelectItem>
+                <SelectItem value="health">Health</SelectItem>
+                <SelectItem value="exams">Exams</SelectItem>
+                <SelectItem value="urgent">Urgent</SelectItem>
+              </SelectContent>
+            </Select>
+            <Textarea placeholder="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Button onClick={addEvent}>Save</Button>
           </div>
-        ) : (
-          <p className="text-gray-500 text-sm">No events have been created yet.</p>
-        )}
-      </section>
-    </main>
+        </DialogContent>
+      </Dialog>
+
+      <Calendar
+        localizer={localizer}
+        events={events}
+        startAccessor="start"
+        endAccessor="end"
+        style={{ height: 500 }}
+        eventPropGetter={eventStyleGetter}
+      />
+
+      <div className="mt-4 space-x-2">
+        <Badge className="bg-indigo-600">General</Badge>
+        <Badge className="bg-green-600">Food</Badge>
+        <Badge className="bg-blue-600">Health</Badge>
+        <Badge className="bg-orange-600">Exams</Badge>
+        <Badge className="bg-red-600">Urgent</Badge>
+      </div>
+    </div>
   );
 }

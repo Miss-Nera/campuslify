@@ -15,10 +15,14 @@ type Course = {
   creditUnit: number;
 };
 
+const COURSES_KEY = "studentCourses"; // all students' registrations stored here
+
 export default function CourseRegistrationPage() {
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
-  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(
+    null
+  );
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,11 +35,18 @@ export default function CourseRegistrationPage() {
     ];
     setAvailableCourses(dummyCourses);
 
-    const saved = JSON.parse(localStorage.getItem("studentCourses") || "[]");
-    setSelectedCourses(saved);
-
-    const profile = JSON.parse(localStorage.getItem("studentProfile") || "null");
+    // load student profile
+    const profile: StudentProfile | null = JSON.parse(
+      localStorage.getItem("studentProfile") || "null"
+    );
     setStudentProfile(profile);
+
+    // load this student's saved courses
+    if (profile) {
+      const allRegs = JSON.parse(localStorage.getItem(COURSES_KEY) || "{}");
+      const studentReg = allRegs[profile.matricNumber] || [];
+      setSelectedCourses(studentReg);
+    }
   }, []);
 
   const toggleCourse = (courseId: string) => {
@@ -52,11 +63,23 @@ export default function CourseRegistrationPage() {
   }, 0);
 
   const handleSubmit = () => {
+    if (!studentProfile) {
+      toast.error("No student profile found.");
+      return;
+    }
+
     if (totalUnits > 24) {
       toast.error("You cannot register more than 24 credit units.");
       return;
     }
-    localStorage.setItem("studentCourses", JSON.stringify(selectedCourses));
+
+    // get all registrations
+    const allRegs = JSON.parse(localStorage.getItem(COURSES_KEY) || "{}");
+
+    // save this student's registration
+    allRegs[studentProfile.matricNumber] = selectedCourses;
+    localStorage.setItem(COURSES_KEY, JSON.stringify(allRegs));
+
     toast.success("Course registration saved successfully!");
   };
 

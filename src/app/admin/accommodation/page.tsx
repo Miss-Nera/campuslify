@@ -601,6 +601,7 @@ const OccupantsButton: React.FC<{ occupants: Student[] }> = ({ occupants }) => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                   <TableHead>Matric Number</TableHead>
                   <TableHead>Gender</TableHead>
                   <TableHead>Level</TableHead>
                   <TableHead>Department</TableHead>
@@ -643,10 +644,11 @@ const OccupantsButton: React.FC<{ occupants: Student[] }> = ({ occupants }) => {
               </DialogHeader>
               <div className="space-y-2 text-sm">
                 <p><strong>Matric:</strong> {selected.matricNumber}</p>
-                <p><strong>Email:</strong> {selected.email}</p>
+                <p><strong>Level:</strong> {selected.level}</p>
                 <p><strong>Phone:</strong> {selected.phone}</p>
-                <p><strong>DOB:</strong> {selected.dob}</p>
+                <p><strong>Emergency contact:</strong> {selected.emergencyContact}</p>
                 <p><strong>Gender:</strong> {selected.gender}</p>
+                 <p><strong>Department:</strong> {selected.department}</p>
 
                 <h3 className="font-semibold mt-3">Accommodation</h3>
                 <p>

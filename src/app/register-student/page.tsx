@@ -41,30 +41,35 @@ export default function StudentRegisterPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (form.password !== confirmPassword) {
-      toast.error("Passwords do not match!");
-      return;
-    }
+  if (form.password !== confirmPassword) {
+    toast.error("Passwords do not match!");
+    return;
+  }
 
-    const existing: StudentProfile[] = JSON.parse(
-      localStorage.getItem(STUDENTS_KEY) || "[]"
-    );
+  const existing: StudentProfile[] = JSON.parse(
+    localStorage.getItem(STUDENTS_KEY) || "[]"
+  );
 
-    if (existing.some((s) => s.matricNumber === form.matricNumber)) {
-      toast.error("Matric Number already registered!");
-      return;
-    }
+  if (existing.some((s) => s.matricNumber === form.matricNumber)) {
+    toast.error("Matric Number already registered!");
+    return;
+  }
 
-    const updated = [...existing, form];
-    localStorage.setItem(STUDENTS_KEY, JSON.stringify(updated));
-    localStorage.setItem(ACTIVE_STUDENT_KEY, JSON.stringify(form));
-
-    toast.success("Registration successful!");
-    router.push("/student");
+  const newStudent = {
+    ...form,
+    id: Date.now().toString(), // unique ID
   };
+
+  const updated = [...existing, newStudent];
+  localStorage.setItem(STUDENTS_KEY, JSON.stringify(updated));
+  localStorage.setItem(ACTIVE_STUDENT_KEY, JSON.stringify(newStudent));
+
+  toast.success("Registration successful!");
+  router.push("/student");
+};
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-600 to-purple-700">

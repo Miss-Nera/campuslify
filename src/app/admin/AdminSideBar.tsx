@@ -65,7 +65,7 @@ export default function AdminSidebar() {
 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="/admin/Announcements">Post Announcements</Link>
+                  <Link href="/admin/announcement">Post Announcements</Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
